@@ -1,0 +1,18 @@
+name: usf-lhc
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.10
+  - numpy
+  - scipy
+  - pandas
+  - matplotlib
+  - emcee
+  - corner
+  - tqdm
+  - snakemake-minimal
+  - pip
+  - pip:
+      - requests
+      - pyyaml
