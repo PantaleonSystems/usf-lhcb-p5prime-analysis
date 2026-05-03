@@ -117,6 +117,16 @@ The file `results/fit_results.json` will contain:
 }
 ```
 
+## Example results
+
+Below is the spectrum of \(P_5'\) from the fit (data, SM and USF):
+
+![Spectrum](results/spectrum_p5p.png)
+
+The posterior distribution of \(\kappa\) is shown below:
+
+![Corner plot](results/corner_kappa.png)
+
 ## Reproducibility and citation
 
 - **Data**: Public LHCb data from HEPData record [ins1409497](https://www.hepdata.net/record/ins1409497) (doi:10.17182/hepdata.74247.v1).
