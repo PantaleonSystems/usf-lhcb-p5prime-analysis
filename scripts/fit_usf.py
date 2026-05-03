@@ -108,10 +108,12 @@ if samples.shape[1] == 1:
     ax.set_ylabel('Density')
     ax.legend()
     fig.savefig("results/corner_kappa.pdf")
+    fig.savefig("results/corner_kappa.png")
     plt.close(fig)
 else:
     fig = corner.corner(samples, labels=[r"$\kappa$"], truths=[kappa_best])
     fig.savefig("results/corner_kappa.pdf")
+    fig.savefig("results/corner_kappa.png")
     plt.close(fig)
 
 print("MCMC done. Results saved in results/")
