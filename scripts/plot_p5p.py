@@ -65,16 +65,24 @@ plt.savefig("results/residuals_p5p.pdf")
 plt.savefig("results/residuals_p5p.png", dpi=150)
 
 # ============================================================================
-# Figure 3: Geometric coupling factor f_geo(q²)
+# Figure 3: Geometric coupling factor f_geo(q²) - illustrative plot
 # ============================================================================
+# For the figure, we use an illustrative amplitude to show the functional form.
+# The actual product of constants is absorbed into κ, so the shape is what matters.
+illustrative_amplitude = 0.8   # any positive number < 2 works
+q0_2_illustrative = (5.279)**2   # m_B^2 ≈ 27.86 GeV²
+
+def f_geo_illustrative(q2):
+    return 1 + illustrative_amplitude / (1 + q2 / q0_2_illustrative)
+
 q2_fine = np.linspace(0, 20, 300)
-f_geo = geometric_factor_usf(q2_fine)
+f_geo_plot = f_geo_illustrative(q2_fine)
 
 plt.figure(figsize=(6,4))
-plt.plot(q2_fine, f_geo, 'purple', linewidth=2)
+plt.plot(q2_fine, f_geo_plot, 'purple', linewidth=2)
 plt.xlabel('$q^2$ (GeV$^2$)')
 plt.ylabel(r'$f_{\rm geo}(q^2)$')
-plt.title('Geometric coupling (LQG + AdS)')
+plt.title('Geometric coupling (LQG + AdS) – schematic shape')
 plt.grid(True, linestyle=':', alpha=0.6)
 plt.axhline(1, color='gray', linestyle='--', alpha=0.5)
 plt.text(12, 1.02, 'High $q^2$: $f \\approx 1$', fontsize=9)
