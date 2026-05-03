@@ -99,19 +99,30 @@ with h5py.File("results/mcmc_chains.h5", "w") as f:
 # =========================================================
 # 7. CORNER PLOT (POSTERIOR OF κ)
 # =========================================================
+plt.rcParams.update({'font.size': 12})
 if samples.shape[1] == 1:
-    fig, ax = plt.subplots()
-    ax.hist(samples, bins=50, density=True, alpha=0.7, label='Posterior')
-    ax.axvline(kappa_best, color='red', linestyle='--', label='best-fit')
-    ax.axvline(kappa_median, color='green', linestyle='-', label='median')
+    fig, ax = plt.subplots(figsize=(6,5))
+    # Draw histogram first (background)
+    ax.hist(samples, bins=50, density=True, alpha=0.7, color='gray', edgecolor='black',
+            label='Posterior')
+    # Shaded 68% credibility region
+    ax.axvspan(kappa_lower, kappa_upper, alpha=0.3, color='gray', label='68% CL')
+    # Then lines on top
+    ax.axvline(kappa_median, color='green', linestyle='-', linewidth=3, label='median')
+    ax.axvline(kappa_best, color='red', linestyle='--', linewidth=1, label='best-fit')
     ax.set_xlabel(r'$\kappa$')
-    ax.set_ylabel('Density')
+    ax.set_ylabel('Probability density')
+    ax.set_title(r'Posterior distribution of $\kappa$ (USF)')
     ax.legend()
-    fig.savefig("results/corner_kappa.pdf")
-    fig.savefig("results/corner_kappa.png")
+    ax.grid(True, linestyle=':', alpha=0.5)
+    plt.tight_layout()
+    fig.savefig("results/corner_kappa.pdf", dpi=300)
+    fig.savefig("results/corner_kappa.png", dpi=300)
     plt.close(fig)
 else:
-    fig = corner.corner(samples, labels=[r"$\kappa$"], truths=[kappa_best])
+    # Multi-dimensional case (not used here, but kept for completeness)
+    fig = corner.corner(samples, labels=[r"$\kappa$"], truths=[kappa_best],
+                        quantiles=[0.16, 0.84], show_titles=True)
     fig.savefig("results/corner_kappa.pdf")
     fig.savefig("results/corner_kappa.png")
     plt.close(fig)
