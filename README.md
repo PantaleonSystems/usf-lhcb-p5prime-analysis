@@ -33,7 +33,7 @@ usf-lhcb-p5prime-analysis/
 ### 1. Clone the repository
 
 ```bash
-git clone [https://github.com/yourusername/usf-lhcb-p5prime-analysis.git](https://github.com/yourusername/usf-lhcb-p5prime-analysis.git)
+git clone https://github.com/PantaleonSystems/usf-lhcb-p5prime-analysis.git
 cd usf-lhcb-p5prime-analysis
 ```
 
@@ -50,7 +50,7 @@ All dependencies (numpy, scipy, pandas, matplotlib, emcee, corner, tqdm, etc.) a
 
 If you wish to verify the derivation of `data/p5p_observables.csv` from the original HEPData YAML files:
 
-- Download the HEPData record `ins1409497` (doi:10.17182/hepdata.74247.v1) into `data/raw/`.
+- Download the HEPData record `ins1409497` ([doi:10.17182/hepdata.74247.v1](https://doi.org/10.17182/hepdata.74247.v1)) into `data/raw/`.
 - Then run:
 
 ```bash
@@ -126,7 +126,7 @@ The file `results/fit_results.json` will contain:
 When using this code or results, please cite:
 
 ```text
-[Your names], “Resolving the P5' anomaly with the Unified State Function (USF): a 7.5 sigma evidence from public LHCb data”, arXiv:XXXX.XXXXX (2026)
+[Efrain Marcelo Pulgar Pantaleon , Efrain Pantaleón Matamoros], “Resolving the P5' anomaly with the Unified State Function (USF): a 7.5 sigma evidence from public LHCb data”, arXiv:XXXX.XXXXX (2026)
 and the Zenodo repository (doi:10.5281/zenodo.xxxxxx).
 ```
 
@@ -136,7 +136,7 @@ This project is licensed under the **MIT License** – see the [LICENSE](LICENSE
 
 ## Authors & contact
 
-- **Efrain Marcelo Pulgar Pantaleon** – [GitHub](https://github.com/yourusername), email: [efrain.pantaleon@ufrn.br](mailto:efrain.pantaleon@ufrn.br)
-- **Efrain Pantaleon Matamoros** – School of Science and Technology, UFRN
+- **Efrain Marcelo Pulgar Pantaleon** – [GitHub](https://github.com/efrainmpp1), email: [efrain.pulgar.110@ufrn.edu.br](mailto:efrain.pulgar.110@ufrn.edu.br) - Graduate Program in Electrical Engineering and Computer Science, UFRN
+- **Efrain Pantaleon Matamoros** - email: [efrain.pantaleon@ufrn.br](mailto:efrain.pantaleon@ufrn.edu.br) – School of Science and Technology, UFRN
 
 For questions or collaboration, please open an issue or contact the authors directly.
