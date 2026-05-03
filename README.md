@@ -3,6 +3,8 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.10](https://img.shields.io/badge/python-3.10-blue.svg)](https://www.python.org/downloads/)
 [![arXiv](https://img.shields.io/badge/arXiv-XXXX.XXXXX-red.svg)](https://arxiv.org/abs/XXXX.XXXXX) <!-- update when available -->
+[![DOI](https://zenodo.org/badge/1227578418.svg)](https://doi.org/10.5281/zenodo.19995233)
+
 
 This repository contains the full, reproducible analysis of the **Unified State Function (USF)** against public LHCb data for the angular observable $P_5'$ in the decay $B^0 \to K^{*0} \mu^+ \mu^-$. The USF – a quantum‑geometric framework unifying Loop Quantum Gravity, string theory and holography – explains the long‑standing $P_5'$ anomaly with a significance of **$7.5\sigma$**, without invoking leptoquarks or other exotic particles.
 
