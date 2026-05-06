@@ -132,8 +132,8 @@ The posterior distribution of \(\kappa\) is shown below:
 ## Reproducibility and citation
 
 - **Data**: Public LHCb data from HEPData record [ins1409497](https://www.hepdata.net/record/ins1409497) (doi:10.17182/hepdata.74247.v1).
-- **Code**: This repository is archived on Zenodo [doi:10.5281/zenodo.xxxxxx](https://doi.org/10.5281/zenodo.xxxxxx).
-- **Paper**: Preprint available at arXiv:XXXX.XXXXX (to be updated).
+- **Code**: This repository is archived on Zenodo [doi:10.5281/zenodo.19995233](https://doi.org/10.5281/zenodo.19995233).
+- **Paper**: Preprint available at [10.5281/zenodo.20013663](https://zenodo.org/records/20013663) and arXiv:XXXX.XXXXX (to be updated).
 
 When using this code or results, please cite:
 
