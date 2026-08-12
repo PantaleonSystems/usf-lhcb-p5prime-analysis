@@ -224,3 +224,6 @@ files/
 
 # Derived: flavio theory-covariance cache, keyed by flavio version
 data/sm_cache.npz
+
+# Derived: precomputed P5'(Delta C9, Delta C10) response grid
+data/response_grid.npz
