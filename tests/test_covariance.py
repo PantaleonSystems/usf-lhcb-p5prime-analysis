@@ -69,14 +69,19 @@ def test_fl_s5_correlations_are_read_for_every_analysis_bin(cov):
     assert np.abs(rho).max() <= 0.2, f"measured correlations {rho.round(3)}"
 
 
-def test_correlation_term_changes_the_errors_only_slightly(cov, observed):
+def test_correlation_term_changes_the_errors_only_slightly(cov):
     """The dropped cross-term matters at the percent level, not more.
 
     Recorded so the correction is not oversold. This is the one approximation
     in the published analysis that survives scrutiny; the objection was that it
     was estimated rather than computed from data already in the repository.
     """
-    _, _, published_errors = observed
+    import pandas as pd
+
+    from conftest import DATA_DIR
+
+    frame = pd.read_csv(DATA_DIR / "p5p_observables.csv")
+    published_errors = frame["error_uncorrelated"].values
 
     fl, fl_err, s5, s5_err = _table2_inputs()
     rho = np.array([cov.fl_s5_correlation(b) for b in ANALYSIS_BINS])

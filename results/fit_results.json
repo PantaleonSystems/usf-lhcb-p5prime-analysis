@@ -1,9 +1,117 @@
 {
-  "kappa_best": 1.4442969313121368,
-  "kappa_median": 1.4429527755228782,
-  "kappa_lower": 1.2467975520423762,
-  "kappa_upper": 1.6401151890121526,
-  "chi2_SM": 70.40455941782037,
-  "chi2_USF": 13.901577265080217,
-  "delta_chi2": 56.502982152740145
+  "models": {
+    "SM": {
+      "n_params": 0,
+      "chi2": 14.555932569818063,
+      "dof": 7,
+      "p_goodness_of_fit": 0.04213221299584414,
+      "aic": 14.555932569818063,
+      "bic": 14.555932569818063,
+      "best_fit": []
+    },
+    "Delta C9 free": {
+      "n_params": 1,
+      "chi2": 5.211462386411322,
+      "dof": 6,
+      "p_goodness_of_fit": 0.5169917436522813,
+      "aic": 7.211462386411322,
+      "bic": 7.157372535466635,
+      "best_fit": [
+        -1.3769274468293933
+      ]
+    },
+    "USF (kappa)": {
+      "n_params": 1,
+      "chi2": 5.229081235251638,
+      "dof": 6,
+      "p_goodness_of_fit": 0.5147853864545158,
+      "aic": 7.229081235251638,
+      "bic": 7.174991384306951,
+      "best_fit": [
+        -1.4751630747840792
+      ]
+    },
+    "USF ansatz (kappa, A)": {
+      "n_params": 2,
+      "chi2": 5.013043629607635,
+      "dof": 5,
+      "p_goodness_of_fit": 0.4142903998583769,
+      "aic": 9.013043629607635,
+      "bic": 8.904863927718262,
+      "best_fit": [
+        -0.35428374394315937,
+        4.018980219627777
+      ]
+    }
+  },
+  "comparisons": {
+    "delta_chi2_sm_minus_usf": 9.326851334566426,
+    "delta_chi2_sm_minus_c9": 9.344470183406742,
+    "delta_chi2_c9_minus_usf": -0.017618848840315948,
+    "delta_chi2_usf_minus_ansatz": 0.21603760564400254
+  },
+  "significance": {
+    "p_value_toys": 0.0011997600479904018,
+    "significance_toys": 3.035732668736435,
+    "p_value_wilks": 0.0022582004989935146,
+    "significance_wilks_naive": 3.053989412975498,
+    "n_toys": 5000,
+    "toys_exceeding": 5,
+    "toy_median_delta_chi2": 0.5042575449874572
+  },
+  "posterior": {
+    "kappa_median": -1.4075936313021022,
+    "kappa_lower": -1.7097922807803154,
+    "kappa_upper": -1.032653646095505,
+    "kappa_best": -1.4751630747840792
+  },
+  "diagnostics": {
+    "autocorr_time": 29.66833031154438,
+    "acceptance_fraction": 0.8040703124999999,
+    "burn_in": 148,
+    "thin": 14,
+    "converged": true,
+    "n_effective_samples": 17920
+  },
+  "provenance": {
+    "seed": 20260812,
+    "n_walkers": 32,
+    "n_steps": 8000,
+    "n_toys": 5000,
+    "bins": [
+      [
+        1.1,
+        2.5
+      ],
+      [
+        2.5,
+        4.0
+      ],
+      [
+        4.0,
+        6.0
+      ],
+      [
+        6.0,
+        8.0
+      ],
+      [
+        11.0,
+        12.5
+      ],
+      [
+        15.0,
+        17.0
+      ],
+      [
+        17.0,
+        19.0
+      ]
+    ],
+    "data_sha256": "b9c1cfd04da8294fb9e8d0a39d813a0ace197d6a01734c60d25df9a55b18d8b1",
+    "flavio_version": "2.7.0",
+    "wilson_version": "2.5.2",
+    "theory_covariance_included": true,
+    "experimental_correlations_included": true
+  }
 }
