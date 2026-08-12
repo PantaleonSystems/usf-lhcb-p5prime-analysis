@@ -31,42 +31,65 @@ def generator():
 def test_fl_and_s5_are_read_from_the_same_table(generator):
     """Both angular coefficients must come from one consistently binned table.
 
-    DEFECT: FL_FILE points at Table1.yaml (two wide bins: 1.1-6 and 15-19)
-    while S5_FILE points at Table2.yaml (eight narrow bins). main() then zips
-    the two lists positionally, pairing F_L(1.1-6) with S_5(0.1-0.98).
+    The previous version read F_L from Table1 (two wide bins) and S_5 from
+    Table2 (eight narrow bins), then zipped them positionally.
     """
-    assert generator.FL_FILE.name == generator.S5_FILE.name, (
-        f"F_L is read from {generator.FL_FILE.name} and S_5 from "
-        f"{generator.S5_FILE.name}; these tables have different binnings"
+    bins_fl, _, _ = generator.load_observable(generator.SOURCE_TABLE, FL)
+    bins_s5, _, _ = generator.load_observable(generator.SOURCE_TABLE, S5)
+    assert bins_fl == bins_s5
+
+
+def test_extraction_selects_the_seven_analysis_bins(generator):
+    """The extraction must find all seven bins, or fail loudly.
+
+    The previous version derived candidate centres from Table1 (3.55 and 17.0
+    GeV^2), matched none of the targets within tolerance, and wrote a zero-row
+    CSV without raising -- which is why the committed CSV could not have come
+    from this script.
+    """
+    frame = generator.build_analysis_csv()
+    assert len(frame) == len(ANALYSIS_BINS)
+    built = list(zip(frame.q2_min, frame.q2_max))
+    assert built == ANALYSIS_BINS
+
+
+def test_missing_bins_raise_instead_of_writing_an_empty_file(generator, monkeypatch):
+    """Silent failure is what allowed the broken extraction to go unnoticed."""
+    monkeypatch.setattr(generator, "ANALYSIS_BINS", [(1.1, 2.5), (99.0, 100.0)])
+    with pytest.raises(ValueError, match="does not contain the bins"):
+        generator.build_analysis_csv()
+
+
+def test_reconstruction_agrees_with_lhcb_published_p5p(generator):
+    """The F_L/S5 reconstruction must reproduce LHCb's own P5' where published.
+
+    Validates the method itself: in the two wide bins where the collaboration
+    publishes P5' directly, the reconstruction agrees to better than 0.001.
+    """
+    cross = generator.build_cross_check_csv()
+    deviation = np.abs(cross.value_published - cross.value_reconstructed)
+    assert deviation.max() < 0.002, (
+        f"reconstruction deviates from the published values by "
+        f"{deviation.max():.4f}"
     )
 
 
-def test_extraction_selects_the_seven_analysis_bins(generator, hepdata):
-    """The bin-matching filter must actually select seven bins.
-
-    DEFECT: main() derives candidate bin centres from FL_FILE (Table1), giving
-    3.55 and 17.0 GeV^2. Neither is within the 0.1 tolerance of any target
-    centre, so `selected` is empty and the script writes a zero-row CSV
-    without raising.
-    """
-    bins, _, _ = hepdata("Table1", FL)
-    centres = [(lo + hi) / 2 for lo, hi in bins]
-    targets = np.array([np.mean(b) for b in ANALYSIS_BINS])
-    selected = [c for c in centres if np.any(np.abs(targets - c) < 0.1)]
-    assert len(selected) == 7, (
-        f"bin centres derived from {generator.FL_FILE.name} are {centres}; "
-        f"{len(selected)} of the 7 required bins match"
-    )
-
-
-def test_committed_csv_matches_a_table2_reconstruction(observed, hepdata):
+def test_committed_csv_matches_a_table2_reconstruction(hepdata):
     """The committed values must be reproducible from the raw YAML.
 
-    This one passes: the CSV is a faithful Table2 reconstruction with the
-    photon-pole bin dropped. It pins the numbers so a future fix to the
-    extraction script cannot silently change them.
+    Pins the numbers so a change to the extraction cannot silently move them.
+    The comparison is against the *uncorrelated* error column, which is what
+    the published analysis used and what this reconstruction reproduces; the
+    `error` column now additionally carries the F_L-S5 correlation.
     """
-    _, values, errors = observed
+    import pandas as pd
+
+    from conftest import DATA_DIR
+
+    frame = pd.read_csv(DATA_DIR / "p5p_observables.csv")
+    values = frame["value"].values
+    errors = frame["error_uncorrelated"].values
+
     bins, fl, fl_err = hepdata("Table2", FL)
     _, s5, s5_err = hepdata("Table2", S5)
 
