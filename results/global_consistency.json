@@ -1,0 +1,83 @@
+{
+  "kappa": -1.4751630747840792,
+  "delta_c9": -1.4751630747840792,
+  "delta_c10": 0.2950326149568158,
+  "c10_over_c9": -0.2,
+  "ratio_bin": [
+    1.1,
+    6.0
+  ],
+  "sum_squared_pulls_sm": 2.499285211482488,
+  "scenarios": {
+    "muon-specific": {
+      "description": "Delta C9, C10 applied to b->s mu mu only",
+      "observables": {
+        "BR(Bs->mumu)": {
+          "sm": 3.6289314570849374e-09,
+          "np": 3.133193098573162e-09,
+          "measured": 3.34e-09,
+          "sigma": 2.7e-10,
+          "pull_sm": 1.0701165077219903,
+          "pull_np": -0.7659514867660668,
+          "source": "LHCb/CMS/ATLAS combination, PDG 2023"
+        },
+        "<Rmue>(B+->Kll)": {
+          "sm": 1.000416282252313,
+          "np": 0.6414518144682496,
+          "measured": 0.949,
+          "sigma": 0.047,
+          "pull_sm": 1.0939634521768744,
+          "pull_np": -6.543578415569156,
+          "source": "LHCb 2022, arXiv:2212.09152 (1.1-6 GeV^2)"
+        },
+        "<Rmue>(B0->K*ll)": {
+          "sm": 0.99645323173062,
+          "np": 0.7161244284182228,
+          "measured": 1.027,
+          "sigma": 0.077,
+          "pull_sm": -0.39671127622571384,
+          "pull_np": -4.037345085477625,
+          "source": "LHCb 2022, arXiv:2212.09153 (1.1-6 GeV^2)"
+        }
+      },
+      "sum_squared_pulls_usf": 59.70525550001203,
+      "worst_observable": "<Rmue>(B+->Kll)",
+      "worst_pull": -6.543578415569156
+    },
+    "lepton-universal": {
+      "description": "the same shift applied to electrons as well",
+      "observables": {
+        "BR(Bs->mumu)": {
+          "sm": 3.6289314570849374e-09,
+          "np": 3.133193098573162e-09,
+          "measured": 3.34e-09,
+          "sigma": 2.7e-10,
+          "pull_sm": 1.0701165077219903,
+          "pull_np": -0.7659514867660668,
+          "source": "LHCb/CMS/ATLAS combination, PDG 2023"
+        },
+        "<Rmue>(B+->Kll)": {
+          "sm": 1.000416282252313,
+          "np": 1.0006004008292826,
+          "measured": 0.949,
+          "sigma": 0.047,
+          "pull_sm": 1.0939634521768744,
+          "pull_np": 1.0978808687081412,
+          "source": "LHCb 2022, arXiv:2212.09152 (1.1-6 GeV^2)"
+        },
+        "<Rmue>(B0->K*ll)": {
+          "sm": 0.99645323173062,
+          "np": 0.9957570206735703,
+          "measured": 1.027,
+          "sigma": 0.077,
+          "pull_sm": -0.39671127622571384,
+          "pull_np": -0.4057529782653196,
+          "source": "LHCb 2022, arXiv:2212.09153 (1.1-6 GeV^2)"
+        }
+      },
+      "sum_squared_pulls_usf": 1.9566595613256679,
+      "worst_observable": "<Rmue>(B+->Kll)",
+      "worst_pull": 1.0978808687081412
+    }
+  }
+}
