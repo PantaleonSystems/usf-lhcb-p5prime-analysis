@@ -218,3 +218,6 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Referee reports and manuscript drafts - not for public distribution
+files/

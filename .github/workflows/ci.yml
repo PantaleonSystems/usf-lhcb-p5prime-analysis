@@ -1,0 +1,30 @@
+name: validation
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash -el {0}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: conda-incubator/setup-miniconda@v3
+        with:
+          environment-file: environment.yaml
+          activate-environment: usf-lhc
+          auto-activate-base: false
+
+      - name: Validation suite
+        run: pytest -ra
+
+      - name: Reproduce the pipeline end to end
+        run: |
+          python scripts/generate_p5p_csv.py
+          git diff --exit-code -- data/p5p_observables.csv
+          python scripts/fit_usf.py
+          git diff --exit-code -- results/fit_results.json
