@@ -1,115 +1,139 @@
 # tests/test_sm.py
-"""Tests on the Standard Model reference curve for P5'.
+"""Tests on the Standard Model reference for P5'.
 
-scripts/utils.py hard-codes eight (q^2, P5'_SM) pairs and cubic-interpolates
-them. The comment attributes them to "Fig. 5 of arXiv:1505.07814", while the
-manuscript cites LHCb 2016a (arXiv:1512.04442) as the source.
+The published analysis hard-coded eight (q^2, P5'_SM) pairs in scripts/utils.py
+and cubic-interpolated them. The source comment attributed them to "Fig. 5 of
+arXiv:1505.07814" while the manuscript cites LHCb 2016a (arXiv:1512.04442).
 
-The curve is wrong, and it is wrong in the direction that manufactures the
-claimed anomaly: it puts P5'_SM near -0.12 at high q^2 where the true SM value
-is near -0.67. Roughly 66 of the 70.4 units of chi2_SM reported in the
-manuscript come from bins at q^2 >= 7 GeV^2, where no anomaly is known to
-exist.
+That curve was wrong in the direction that manufactures the claimed anomaly:
+it puts P5'_SM near -0.12 at high q^2 where the true value is near -0.67, and
+roughly 66 of the 70.4 units of chi2_SM came from bins at q^2 >= 7 GeV^2 where
+no anomaly is known to exist.
+
+scripts/sm_predictions.py replaces it with flavio. These tests pin the new
+module's behaviour and keep the old curve from creeping back.
 """
+import inspect
+
 import numpy as np
 import pytest
 
 from conftest import ANALYSIS_BINS, ANALYSIS_BIN_CENTRES
 
 
-def test_reference_grid_covers_the_analysis_range(utils):
-    """No prediction may be produced by extrapolation.
-
-    DEFECT: the reference grid _q_ref ends at 15.0 GeV^2, but the analysis uses
-    a bin centred at 18.0 GeV^2. With fill_value='extrapolate', that point is a
-    blind cubic extrapolation returning -0.034, and it contributes 19.7 units
-    of chi2 -- 28% of the headline chi2_SM.
-    """
-    q_ref = utils._q_ref
-    assert q_ref.min() <= ANALYSIS_BIN_CENTRES.min(), "grid starts above the first bin"
-    assert q_ref.max() >= ANALYSIS_BIN_CENTRES.max(), (
-        f"reference grid ends at {q_ref.max()} GeV^2 but the analysis needs "
-        f"{ANALYSIS_BIN_CENTRES.max()} GeV^2; predictions there are extrapolated"
-    )
-
-
-def test_sm_high_q2_anchor(utils):
-    """P5'_SM in 15-17 GeV^2 is close to -0.67, not -0.12.
-
-    An anchor against an externally known value. The high-q^2 region is
-    theoretically clean (OPE in 1/m_b), so the SM prediction there is not
-    controversial and the measurement agrees with it.
-    """
-    value = utils.p5p_sm(16.0)
-    assert value == pytest.approx(-0.67, abs=0.15), (
-        f"P5'_SM(16 GeV^2) = {value:+.3f}; the accepted SM value is ~-0.67"
-    )
-
-
-def test_sm_curve_matches_flavio(utils, flavio_sm):
-    """The hard-coded curve must agree with a real SM calculation.
-
-    Tolerance is 3x the flavio theory uncertainty per bin, which is generous.
-    """
-    central, sigma = flavio_sm
-    hard_coded = utils.p5p_sm(ANALYSIS_BIN_CENTRES)
-    deviations = np.abs(hard_coded - central) / sigma
-    worst = int(np.argmax(deviations))
-    assert np.all(deviations < 3.0), (
-        f"worst bin {ANALYSIS_BINS[worst]}: hard-coded {hard_coded[worst]:+.3f} "
-        f"vs flavio {central[worst]:+.3f} +- {sigma[worst]:.3f} "
-        f"({deviations[worst]:.1f} theory sigma)"
-    )
-
-
-def test_bin_integrated_not_bin_centre(utils):
-    """P5' must be integrated over each bin, not evaluated at its centre.
+def test_prediction_is_bin_integrated(sm):
+    """P5' must be requested for a bin, not for a point.
 
     P5' is a ratio of integrals of angular coefficients, so <P5'>_bin differs
-    from P5'(q^2_centre) -- materially so for the 4 GeV-wide bins used here
-    (15-19 in Table 1, and the 11-12.5 / 17-19 bins where the curve turns).
-
-    DEFECT: utils.p5p_sm takes a scalar q^2 and has no notion of a bin. This
-    test documents a missing capability rather than a wrong number.
+    from P5'(q^2_centre) -- materially for the wide bins used here. The
+    interface takes (q2min, q2max) and offers no way to ask for a centre.
     """
-    import inspect
+    params = set(inspect.signature(sm.p5p_sm).parameters)
+    assert {"q2min", "q2max"} <= params, f"p5p_sm accepts {sorted(params)}"
 
-    params = set(inspect.signature(utils.p5p_sm).parameters)
-    assert {"q2min", "q2max"} <= params, (
-        f"p5p_sm accepts {sorted(params)}; a bin-integrated interface "
-        "(q2min, q2max) is required"
+
+def test_covers_the_full_analysis_range(sm):
+    """Every analysis bin must be predictable, none by extrapolation.
+
+    The superseded grid stopped at 15.0 GeV^2, so the 17-19 bin was blind cubic
+    extrapolation returning -0.034 and contributing 19.7 units of chi2 on its
+    own. flavio has no such grid.
+    """
+    values = sm.p5p_sm_binned(ANALYSIS_BINS)
+    assert len(values) == len(ANALYSIS_BINS)
+    assert np.all(np.isfinite(values))
+    assert np.all(np.abs(values) <= 1.0), "P5' is bounded by construction"
+
+
+def test_high_q2_anchor(sm):
+    """P5'_SM in 15-17 GeV^2 is close to -0.67.
+
+    An anchor against an externally known value. The high-q^2 region is
+    theoretically clean (OPE in 1/m_b), so this prediction is not controversial
+    and the measurement agrees with it.
+    """
+    value = sm.p5p_sm(15.0, 17.0)
+    assert value == pytest.approx(-0.67, abs=0.15), (
+        f"P5'_SM(15-17) = {value:+.3f}; the accepted value is ~-0.67"
     )
 
 
-def test_anomaly_has_the_sign_reported_in_the_literature(utils, observed):
+def test_low_q2_anchor(sm):
+    """P5'_SM rises towards positive values at the bottom of the range."""
+    assert sm.p5p_sm(1.1, 2.5) > 0.0
+
+
+def test_theory_covariance_is_available_and_correlated(sm):
+    """Theory errors must be supplied as a covariance, not per-bin sigmas.
+
+    Uncertainties on P5' are dominated by form factors shared across q^2, so
+    adjacent bins are correlated at up to rho = 0.97. Treating them as diagonal
+    is wrong in both directions -- it is not a conservative approximation.
+    """
+    cov = sm.p5p_sm_covariance(ANALYSIS_BINS)
+    n = len(ANALYSIS_BINS)
+    assert cov.shape == (n, n)
+
+    eigenvalues = np.linalg.eigvalsh(cov)
+    assert np.all(eigenvalues > 0), "theory covariance is not positive definite"
+
+    sd = np.sqrt(np.diag(cov))
+    corr = cov / np.outer(sd, sd)
+    off_diagonal = corr[~np.eye(n, dtype=bool)]
+    assert off_diagonal.max() > 0.5, (
+        f"largest off-diagonal theory correlation is {off_diagonal.max():.2f}; "
+        "expected strong correlation from shared form factors"
+    )
+
+
+def test_theory_uncertainties_are_comparable_to_experimental(sm, observed):
+    """Theory errors are not negligible, so omitting them inflates significance.
+
+    The published chi2 divided by the experimental error alone.
+    """
+    _, _, exp_err = observed
+    theory_err = sm.p5p_sm_uncertainty(ANALYSIS_BINS)
+    ratio = theory_err / exp_err
+    assert ratio.max() > 0.2, (
+        f"theory/experimental error ratios {ratio.round(2)}; "
+        "if these were negligible the omission would be harmless"
+    )
+
+
+def test_anomaly_has_the_sign_reported_in_the_literature(sm, observed):
     """In 4-8 GeV^2 the measurement must lie *above* the SM prediction.
 
-    This is the actual, well-documented P5' anomaly: LHCb measures P5' larger
-    (less negative) than the SM in the 4-6 and 6-8 GeV^2 bins.
-
-    DEFECT: with the hard-coded curve the data fall *below* the SM in those
-    bins, inverting the sign of the discrepancy. This is why the fit prefers
-    kappa = +1.44, which shifts P5' downwards -- the opposite of the direction
-    global fits require (they prefer Delta C9 < 0).
+    This is the actual, well-documented P5' anomaly. The superseded curve put
+    the data *below* the SM there, inverting the sign of the discrepancy --
+    which is why the published fit preferred kappa = +1.44 (shifting P5' down)
+    while global fits prefer Delta C9 < 0.
     """
-    q2, values, _ = observed
-    mask = (q2 > 4.0) & (q2 < 9.0)
-    residual = values[mask] - utils.p5p_sm(q2[mask])
+    _, values, _ = observed
+    anomaly_bins = [(4.0, 6.0), (6.0, 8.0)]
+    indices = [ANALYSIS_BINS.index(b) for b in anomaly_bins]
+    residual = values[indices] - sm.p5p_sm_binned(anomaly_bins)
     assert np.all(residual > 0), (
         f"data-minus-SM in the anomaly bins is {residual.round(3)}; "
         "the measured P5' is known to sit above the SM there"
     )
 
 
-def test_theory_uncertainty_enters_the_chi2(utils):
-    """The SM prediction must carry an uncertainty.
+def test_legacy_curve_is_quarantined(sm, utils):
+    """The superseded curve must be retained but unused for fitting.
 
-    DEFECT: the chi2 in scripts/fit_usf.py divides by the experimental error
-    only. Form-factor and charm-loop uncertainties on P5' are 0.03-0.11 in the
-    bins used here -- comparable to the experimental errors in the high-q^2
-    bins -- so omitting them inflates every significance quoted.
+    It stays available so tests and figures can quantify the error, and so the
+    provenance of the published numbers is not lost.
     """
-    assert hasattr(utils, "p5p_sm_uncertainty"), (
-        "utils exposes no SM theory uncertainty; chi2 is computed with "
-        "experimental errors alone"
+    assert "DEPRECATED" in sm.p5p_sm_legacy.__doc__
+
+    legacy = sm.p5p_sm_legacy(ANALYSIS_BIN_CENTRES)
+    correct = sm.p5p_sm_binned(ANALYSIS_BINS)
+    sigma = sm.p5p_sm_uncertainty(ANALYSIS_BINS)
+    deviation = np.abs(legacy - correct) / sigma
+
+    # Pins how wrong it was, so the regression cannot be silently reintroduced.
+    assert deviation.max() > 20.0, (
+        f"legacy curve deviates by at most {deviation.max():.1f} theory sigma"
     )
+    worst = int(np.argmax(deviation))
+    assert ANALYSIS_BINS[worst] == (11.0, 12.5)

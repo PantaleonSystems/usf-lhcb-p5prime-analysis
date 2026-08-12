@@ -221,3 +221,6 @@ __marimo__/
 
 # Referee reports and manuscript drafts - not for public distribution
 files/
+
+# Derived: flavio theory-covariance cache, keyed by flavio version
+data/sm_cache.npz

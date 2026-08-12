@@ -60,6 +60,18 @@ def utils():
 
 
 @pytest.fixture(scope="session")
+def sm():
+    """SM predictions: scripts/sm_predictions.py.
+
+    Owns what utils.p5p_sm used to do with a hard-coded interpolation table.
+    """
+    pytest.importorskip("flavio", reason="sm_predictions is a flavio wrapper")
+    import sm_predictions
+
+    return sm_predictions
+
+
+@pytest.fixture(scope="session")
 def observed():
     """Measured P5' values used by the fit (data/p5p_observables.csv)."""
     df = pd.read_csv(DATA_DIR / "p5p_observables.csv")
