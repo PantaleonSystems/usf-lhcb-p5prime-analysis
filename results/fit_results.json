@@ -60,18 +60,18 @@
     "toy_median_delta_chi2": 0.5042575449874572
   },
   "posterior": {
-    "kappa_median": -1.4075936313021022,
-    "kappa_lower": -1.7097922807803154,
-    "kappa_upper": -1.032653646095505,
+    "kappa_median": -1.407635050625898,
+    "kappa_lower": -1.7067514966050723,
+    "kappa_upper": -1.0279389916326778,
     "kappa_best": -1.4751630747840792
   },
   "diagnostics": {
-    "autocorr_time": 29.66833031154438,
-    "acceptance_fraction": 0.8040703124999999,
-    "burn_in": 148,
+    "autocorr_time": 28.367253842161606,
+    "acceptance_fraction": 0.8028515624999999,
+    "burn_in": 141,
     "thin": 14,
     "converged": true,
-    "n_effective_samples": 17920
+    "n_effective_samples": 17952
   },
   "provenance": {
     "seed": 20260812,

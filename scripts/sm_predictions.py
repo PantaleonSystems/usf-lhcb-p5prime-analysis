@@ -123,8 +123,17 @@ def p5p_sm_covariance(bins=None, n_samples: int = COVARIANCE_SAMPLES,
 
     flavio = _flavio()
     observables = [(OBSERVABLE, lo, hi) for lo, hi in bins]
-    np.random.seed(COVARIANCE_SEED)
-    cov = np.asarray(flavio.sm_covariance(observables, N=n_samples, threads=threads))
+    # flavio samples from the global NumPy RNG. Seed it for reproducibility,
+    # but restore the caller's state afterwards: otherwise whether this cache
+    # was warm or cold would silently change every later random draw.
+    state = np.random.get_state()
+    try:
+        np.random.seed(COVARIANCE_SEED)
+        cov = np.asarray(
+            flavio.sm_covariance(observables, N=n_samples, threads=threads)
+        )
+    finally:
+        np.random.set_state(state)
 
     if use_cache:
         _cache_store(key, cov)

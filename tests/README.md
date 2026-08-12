@@ -1,79 +1,61 @@
 # Validation suite
 
-This suite is deliberately **failing**. It encodes the claims the manuscript
-makes about its own pipeline, so that each defect is named by a test rather
-than found by inspection. Fixing the analysis means turning these green.
+This suite encodes the claims the analysis makes about itself, so that defects
+are named by a test rather than found by inspection. The original pipeline had
+no test that could fail: every check was a figure the authors inspected.
 
 ```bash
-conda env update -f environment.yaml   # adds flavio, wilson, pytest
-pytest
+make test
 ```
 
-Current status: **23 failed, 3 passed**.
+Current status: **45 passed, 5 xfailed**.
 
-## What passes
+Every remaining `xfail` is marked `strict=True` and carries a reason. They are
+**results, not unfixed defects** — each asserts something the model would have
+to do in order to have content, and records that it does not. If any of them
+ever passes, the suite fails, because that would mean the physics changed.
 
-| Test | Meaning |
+## The five xfails
+
+| Test | What it asserts | Measured |
+| --- | --- | --- |
+| `test_geometry.py::test_geometric_prefactor_is_dimensionless_and_order_unity` | $G_{\rm LQG} R_{\rm AdS}$ is dimensionless and O(1), as the manuscript states | $1.63\times10^{-33}$, carrying a dimension of length |
+| `test_geometry.py::test_f_geo_actually_varies_with_q2` | $f_{\rm geo}$ depends on $q^2$ | Predicted amplitude $\approx 7\times10^{-64}$, so $f_{\rm geo} \equiv 1$ |
+| `test_geometry.py::test_f_geo_decreases_with_q2` | $f_{\rm geo}$ is larger at low $q^2$ (manuscript Fig. 1) | Flat; the falling curve exists only at a hand-supplied amplitude |
+| `test_baseline.py::test_usf_does_not_beat_a_free_c9` | The USF improves on a plain constant $\Delta C_9$ | $\Delta\chi^2 = -0.018$ at equal parameter count |
+| `test_baseline.py::test_q2_shape_earns_its_parameter` | Freeing the amplitude justifies the extra parameter | AIC worsens, 7.23 → 9.01 |
+
+The first three are the referee's central objection, confirmed. The last two are
+its consequence for the fit.
+
+## Coverage by file
+
+| File | Subject |
 | --- | --- |
-| `test_committed_csv_matches_a_table2_reconstruction` | The seven measured P5' values are correct — a faithful Table2 reconstruction. The *data* are not the problem. |
-| `test_published_p5p_is_used_where_available` | LHCb's own P5' values are present in Table1 and available to anchor against. |
-| `test_sm_limit_is_recovered` | `kappa = 0` returns the SM curve exactly. |
+| `test_geometry.py` | Units, dimensions and the geometric coupling. The repaired unit errors are pinned here so they cannot return. |
+| `test_sm.py` | The SM reference: bin integration, theory covariance, the anomaly's sign, and how far the superseded curve was off (quarantined, not deleted). |
+| `test_response.py` | $P_5'$ against the Wilson coefficients: the interpolator is validated against exact flavio calls, and the constant-slope assumption is measured against the true bin-dependent one. |
+| `test_covariance.py` | The LHCb correlation matrices: table-to-bin mapping checked against `submission.yaml`, and the effect of the previously dropped cross-term measured at 1.3%. |
+| `test_data_extraction.py` | HEPData → CSV, including a cross-check of the reconstruction against LHCb's own published $P_5'$. |
+| `test_baseline.py` | Model comparison against the naive alternative — the check whose absence let the original result stand. |
+| `test_global_consistency.py` | The fixed $\Delta C_{10}/\Delta C_9 = -0.2$ prediction against $B_s\to\mu\mu$, $R_K$, $R_{K^*}$, under both lepton-flavour readings. |
+| `test_pipeline.py` | Seeding, provenance, input hashing and convergence diagnostics. |
 
-## What fails, by severity
+## What the suite established
 
-### Fatal — the model has no content
+Beyond the two referee reports:
 
-| Test | Defect |
-| --- | --- |
-| `test_f_geo_actually_varies_with_q2` | `f_geo(q^2) == 1.0` identically. Two unit errors leave `f_geo - 1 ~ 1.6e-33`, which underflows against 1.0. |
-| `test_usf_is_distinguishable_from_a_constant_shift` | Consequently the fitted model *is* `P5'_SM(q^2) - 0.3*kappa`. A plain constant offset recovers the same kappa to 8 significant figures and the same chi2 to 12. |
-| `test_f_geo_decreases_with_q2` | The low- to high-q^2 contrast the manuscript's Figure 1 shows does not exist in the code. That figure is drawn from a hard-coded `illustrative_amplitude = 0.8` in `plot_p5p.py`, not from `geometric_factor_usf`. |
+- The SM curve deviated by up to **26 theory sigma**, and inverted the sign of
+  the discrepancy in the anomaly region.
+- $dP_5'/dC_9$ varies by a factor of **14** across the bins, so the constant
+  $-0.3$ gave the high-$q^2$ bins — exactly where the fake anomaly sat — an
+  order of magnitude too much leverage. The two errors compounded.
+- `generate_p5p_csv.py` could not have produced the committed CSV.
+- The correlation matrices were vendored in `data/raw/` and unread.
 
-### Fatal — the reference curve manufactures the anomaly
+And two findings in the analysis's favour, recorded rather than buried:
 
-| Test | Defect |
-| --- | --- |
-| `test_sm_curve_matches_flavio` | The hard-coded SM grid is off by up to **32.6 theory sigma** (bin 11–12.5: −0.139 vs −0.822). |
-| `test_sm_high_q2_anchor` | `P5'_SM(16 GeV^2) = -0.119`; the accepted value is ≈ −0.67. |
-| `test_reference_grid_covers_the_analysis_range` | The 18 GeV² bin is blind cubic **extrapolation** (`_q_ref` stops at 15.0), and contributes 19.7 of the 70.4 chi2. |
-| `test_anomaly_has_the_sign_reported_in_the_literature` | With the correct SM, data sit *above* the SM in 4–8 GeV² (the real anomaly). With the hard-coded curve they sit below, inverting the sign — which is why the fit prefers `kappa = +1.44` while global fits prefer `Delta C9 < 0`. |
-| `test_delta_chi2_survives_a_correct_sm_curve` | chi2_SM collapses **70.4 → 17.2** (7 dof, p = 0.016 ≈ 2.4σ) once flavio supplies the SM and theory errors are included. |
-
-### Serious — units and dimensions
-
-| Test | Defect |
-| --- | --- |
-| `test_planck_energy_is_expressed_in_gev` | `utils.E_P` is in joules; `E_P/1e9` is used as if GeV, giving 1.956 instead of 1.22e19 — a factor ~1e19. |
-| `test_planck_suppression_is_not_saturated` | The correct `tanh(E_cms²/E_P²)` at 14 TeV is 1.3e-30. The code returns 1.0, i.e. it *accidentally reproduces the manuscript's incorrect claim* via the joule/GeV error. |
-| `test_geometric_prefactor_is_dimensionless_and_order_unity` | `G_LQG * R_AdS = 1.63e-33` and carries dimension of **length**; the manuscript calls it a dimensionless O(1) constant. |
-| `test_collider_energy_matches_the_fitted_dataset` | `collision_energy` defaults to 14 TeV; the fitted Run-1 data are 7 and 8 TeV. |
-
-### Serious — statistics
-
-| Test | Defect |
-| --- | --- |
-| `test_theory_uncertainty_enters_the_chi2` | chi2 uses experimental errors only. Theory errors are 0.03–0.11 here, comparable to the experimental ones at high q². |
-| `test_bin_integrated_not_bin_centre` | P5' is evaluated at bin centres. It is a ratio of integrals and must be bin-averaged, notably for the 4 GeV-wide bins. |
-| `test_correlation_matrices_are_available_and_used` | HEPData ships a likelihood correlation matrix per q² bin; **they are already vendored in `data/raw/` and no script reads them**. Sec. 3.2's "at most 10%" estimate was unnecessary. |
-| `test_significance_is_not_taken_as_sqrt_delta_chi2` | 7.5σ is `sqrt(56.5)`. Wilks is asymptotic; with 7 points and a bounded prior it needs toy-MC calibration, and a p-value should be quoted. |
-
-### Reproducibility
-
-| Test | Defect |
-| --- | --- |
-| `test_fl_and_s5_are_read_from_the_same_table` | `generate_p5p_csv.py` reads F_L from Table1 (2 bins) and S_5 from Table2 (8 bins), then zips them positionally. |
-| `test_extraction_selects_the_seven_analysis_bins` | The resulting bin centres (3.55, 17.0) match no target within tolerance, so the script writes a **zero-row CSV** without raising. The committed CSV was produced some other way. |
-| `test_mcmc_is_seeded` | No seed; the credibility interval changes every run. |
-| `test_reported_interval_matches_the_manuscript` | json `[1.247, 1.640]` vs manuscript `[1.26, 1.64]`. |
-| `test_readme_numbers_match_fit_results` | README `[1.2493, 1.6293]` vs json `[1.2468, 1.6401]` — pasted from a third run. |
-| `test_provenance_is_recorded` / `test_convergence_diagnostics_are_reported` | No seed, step count, autocorrelation time or acceptance fraction in the results file. |
-
-## Note on the two "expected to fail forever" tests
-
-`test_planck_suppression_is_not_saturated` and
-`test_geometric_prefactor_is_dimensionless_and_order_unity` assert the
-*physically correct* values, not the manuscript's claims. They cannot be made
-to pass by fixing arithmetic: making the tanh correct drives `f_geo → 1`
-exactly, and the model loses its geometric prediction. They mark the point
-where the framework has to be either reformulated or restated as a
-phenomenological ansatz with a free normalisation.
+- The measured $P_5'$ values are correct, reproducing LHCb's own published
+  values to better than 0.001.
+- The manuscript's estimate that neglecting the $F_L$–$S_5$ correlation matters
+  "at most 10%" was right; the true effect is 1.3%.

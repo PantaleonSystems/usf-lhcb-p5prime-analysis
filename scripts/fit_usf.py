@@ -326,6 +326,10 @@ def main() -> None:
 
     kappa_best = results["USF (kappa)"]["best_fit"][0]
     start = kappa_best + 1e-3 * rng.standard_normal((N_WALKERS, 1))
+    # emcee draws from the global NumPy RNG, not from `rng`. Without this the
+    # posterior interval moves between runs -- which is how three different 68%
+    # intervals ended up in circulation for the published result.
+    np.random.seed(SEED)
     sampler = emcee.EnsembleSampler(N_WALKERS, 1, log_posterior)
     sampler.run_mcmc(start, N_STEPS, progress=False)
 

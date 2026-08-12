@@ -20,11 +20,24 @@ jobs:
           auto-activate-base: false
 
       - name: Validation suite
-        run: pytest -ra
+        run: make test
 
-      - name: Reproduce the pipeline end to end
+      - name: Rebuild the input CSV from the raw HEPData YAML
         run: |
-          python scripts/generate_p5p_csv.py
+          make data
           git diff --exit-code -- data/p5p_observables.csv
-          python scripts/fit_usf.py
-          git diff --exit-code -- results/fit_results.json
+
+      - name: Run the fit and the cross-check
+        run: |
+          make fit
+          make consistency
+
+      # Re-run the suite against freshly generated results, so the tests that
+      # read results/*.json check this run rather than the committed files.
+      - name: Validation suite against regenerated results
+        run: make test
+
+      - name: Confirm the README block is up to date
+        run: |
+          make figures readme
+          git diff --exit-code -- README.md

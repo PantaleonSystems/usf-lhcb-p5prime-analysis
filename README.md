@@ -2,153 +2,168 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.10](https://img.shields.io/badge/python-3.10-blue.svg)](https://www.python.org/downloads/)
-[![arXiv](https://img.shields.io/badge/arXiv-XXXX.XXXXX-red.svg)](https://arxiv.org/abs/XXXX.XXXXX) <!-- update when available -->
 [![DOI](https://zenodo.org/badge/1227578418.svg)](https://doi.org/10.5281/zenodo.19995233)
 
+A reproducible confrontation of the **Unified State Function (USF)** with public
+LHCb data for the angular observable $P_5'$ in $B^0 \to K^{*0}\mu^+\mu^-$.
 
-This repository contains the full, reproducible analysis of the **Unified State Function (USF)** against public LHCb data for the angular observable $P_5'$ in the decay $B^0 \to K^{*0} \mu^+ \mu^-$. The USF – a quantum‑geometric framework unifying Loop Quantum Gravity, string theory and holography – explains the long‑standing $P_5'$ anomaly with a significance of **$7.5\sigma$**, without invoking leptoquarks or other exotic particles.
+> **Status.** This repository has been through a correctness review. The
+> analysis it originally implemented contained defects that produced its
+> headline result; the numbers below come from a corrected pipeline and differ
+> substantially from the associated manuscript. See
+> [Corrections](#corrections) and [`tests/README.md`](tests/README.md).
 
-Key results:
+## Corrections
 
-- One free parameter $\kappa = 1.44^{+0.20}_{-0.18}$ (68% CL)
-- $\chi^2_{\text{SM}} = 70.4$ (7 dof) $\to$ $\chi^2_{\text{USF}} = 13.9$ (6 dof)
-- $\Delta\chi^2 = 56.5$ corresponds to a **$7.5\sigma$ rejection of the Standard Model**
+The first release reported $\chi^2$ improving from 70.4 (SM) to 13.9 (USF),
+$\kappa = 1.44^{+0.20}_{-0.18}$, and a $7.5\sigma$ rejection of the Standard
+Model. Each of those figures was an artefact.
+
+| Defect | Effect |
+| --- | --- |
+| The SM reference was eight hard-coded $(q^2, P_5')$ pairs, wrong by up to 26 theory sigma and extrapolated above 15 GeV². | ~66 of the 70.4 units of $\chi^2_{\rm SM}$ came from $q^2 \ge 7$ bins, where no anomaly exists. See [`results/sm_curve_comparison.png`](results/sm_curve_comparison.png). |
+| That curve inverted the sign of the discrepancy. | The fit preferred $\kappa = +1.44$; against a correct SM the data prefer $\Delta C_9 < 0$, as global fits report. |
+| `E_P` held joules and was divided by 1e9 as though converting to GeV. | The Planck suppression $\tanh(E^2/E_P^2)$ evaluated to 1.0 instead of $4\times10^{-31}$. |
+| $G_{\rm LQG} R_{\rm AdS} = 1.63\times10^{-33}$ and carries a dimension of length. | Called "a constant of order unity" in the manuscript. |
+| Combined, these leave $f_{\rm geo} - 1 \sim 10^{-33}$. | $f_{\rm geo} \equiv 1$ in double precision, so the model reduces to a constant shift in $C_9$ with no geometric content. |
+| $dP_5'/dC_9$ was taken as a constant $-0.3$. | The true slope varies by a factor of 14 across the bins (−0.278 to −0.020), giving the high-$q^2$ bins spurious leverage. |
+| $\chi^2$ used experimental errors only. | Theory errors are 0.03–0.10 here, with correlations up to 0.97 between bins. |
+| `generate_p5p_csv.py` read $F_L$ and $S_5$ from differently binned tables and zipped them positionally. | It emitted a zero-row CSV without raising; the committed CSV came from elsewhere. |
+| The MCMC was unseeded. | Three different 68% intervals were in circulation across manuscript, JSON and README. |
+
+Two things survived review: the **measured $P_5'$ values are correct** (they
+reproduce LHCb's own published values to better than 0.001 where those exist),
+and the manuscript's estimate that neglecting the $F_L$–$S_5$ correlation
+"affects the total uncertainty by at most 10%" was **right** — the true effect
+is 1.3%.
+
+## Results
+
+<!-- BEGIN GENERATED RESULTS -->
+
+### Model comparison
+
+| model | params | chi2 | dof | p(gof) | AIC | best fit |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| SM | 0 | 14.56 | 7 | 0.042 | 14.56 | — |
+| Delta C9 free | 1 | 5.21 | 6 | 0.517 | 7.21 | -1.377 |
+| USF (kappa) | 1 | 5.23 | 6 | 0.515 | 7.23 | -1.475 |
+| USF ansatz (kappa, A) | 2 | 5.01 | 5 | 0.414 | 9.01 | -0.354, +4.019 |
+
+### Headline numbers
+
+- **kappa = -1.41 (+0.38 / −0.30)** at 68% credibility.
+- **chi2_SM = 14.56** for 7 dof (p = 0.042).
+- **Significance 3.04 sigma**, calibrated with 5000 SM pseudo-experiments (p = 0.0012). The naive sqrt(delta chi2) would give 3.05.
+- Against a free constant Delta C9 at equal parameter count, the USF gains **delta chi2 = -0.018** — that is, nothing.
+- Freeing the f_geo amplitude buys +0.216 in chi2 for one extra parameter, so AIC worsens from 7.23 to 9.01.
+
+### Cross-check against other b → s ℓℓ observables
+
+Testing the framework's fixed prediction Delta C10 = -0.2 × Delta C9 at Delta C9 = -1.475:
+
+| scenario | sum of squared pulls | worst tension |
+| --- | ---: | --- |
+| Standard Model | 2.50 | — |
+| muon-specific | 59.71 | <Rmue>(B+->Kll) at -6.54 sigma |
+| lepton-universal | 1.96 | <Rmue>(B+->Kll) at +1.10 sigma |
+
+The verdict depends on whether the geometric modification is lepton universal, which the manuscript never states. A muon-specific shift of this size is excluded by R_K; a lepton-universal one — the natural reading for an effect sourced by spacetime geometry — survives.
+
+### Provenance
+
+- Seed `20260812`, 32 walkers × 8000 steps, 5000 toys.
+- flavio 2.7.0, wilson 2.5.2.
+- Input `data/p5p_observables.csv` sha256 `b9c1cfd04da8294f…`
+- Theory covariance included: True; experimental correlations included: True.
+
+_This section is generated by `scripts/update_readme.py`. Run `make readme` to refresh it._
+
+<!-- END GENERATED RESULTS -->
 
 ## Repository structure
 
 ```text
 usf-lhcb-p5prime-analysis/
 ├── data/
-│   └── p5p_observables.csv       # processed experimental P5' values (7 bins)
+│   ├── raw/                          # HEPData record ins1409497
+│   ├── p5p_observables.csv           # reconstructed P5', 7 bins
+│   └── p5p_published_wide_bins.csv   # LHCb's own P5', for cross-checking
 ├── scripts/
-│   ├── utils.py                  # constants, geometric factor, SM & USF predictions
-│   ├── fit_usf.py                # MCMC fit, corner plot, chi2 calculation
-│   ├── plot_p5p.py               # generate all figures (spectrum, residuals, f_geo, HL-LHC)
-│   └── generate_p5p_from_yaml.py # (optional) regenerate CSV from raw YAMLs
-├── environment.yaml              # Conda environment with all dependencies
-├── README.md
-└── LICENSE
+│   ├── utils.py                      # geometric coupling, units made explicit
+│   ├── sm_predictions.py             # SM predictions and theory covariance (flavio)
+│   ├── response.py                   # P5' vs Wilson coefficients (flavio + wilson)
+│   ├── covariance.py                 # experimental covariance from LHCb matrices
+│   ├── generate_p5p_csv.py           # HEPData YAML -> CSV
+│   ├── fit_usf.py                    # MCMC fit, model comparison, toy calibration
+│   ├── global_consistency.py         # cross-check vs Bs->mumu, R_K, R_K*
+│   ├── plot_p5p.py                   # figures
+│   └── update_readme.py              # regenerates the block above
+├── tests/                            # validation suite (see tests/README.md)
+├── Makefile
+└── environment.yaml
 ```
 
 ## Getting started
 
-### 1. Clone the repository
-
-```bash
-git clone https://github.com/PantaleonSystems/usf-lhcb-p5prime-analysis.git
-cd usf-lhcb-p5prime-analysis
-```
-
-### 2. Create the Conda environment
-
 ```bash
 conda env create -f environment.yaml
 conda activate usf-lhc
+make all
 ```
 
-All dependencies (numpy, scipy, pandas, matplotlib, emcee, corner, tqdm, etc.) are pinned in the environment file.
+`make all` runs the whole pipeline from the raw HEPData YAML: rebuilds the CSV,
+runs the fit, performs the cross-check, regenerates every figure, and refreshes
+the results block above. Individual stages are available as `make data`,
+`make fit`, `make consistency`, `make figures`; `make help` lists them.
 
-### 3. (Optional) Regenerate the input CSV from raw YAMLs
+The first run builds two caches (flavio theory covariance, and the
+$(\Delta C_9, \Delta C_{10})$ response grid) which takes a few minutes.
+Subsequent runs are fast.
 
-If you wish to verify the derivation of `data/p5p_observables.csv` from the original HEPData YAML files:
-
-- Download the HEPData record `ins1409497` ([doi:10.17182/hepdata.74247.v1](https://doi.org/10.17182/hepdata.74247.v1)) into `data/raw/`.
-- Then run:
+## Validation suite
 
 ```bash
-python scripts/generate_p5p_from_yaml.py
+make test
 ```
 
-The repository already includes the processed CSV, so this step is **not required** for reproducing the main analysis.
+The suite encodes the claims the analysis makes about itself, so that defects
+are named by a test rather than found by inspection. Some tests are marked
+`xfail(strict=True)`: they assert what the model would have to do to have
+content, and record that it does not. Those are **results, not unfixed bugs** —
+each carries its reason. [`tests/README.md`](tests/README.md) has the full
+inventory.
 
-## Running the analysis
+## Data
 
-### Fit the USF parameter $\kappa$ (MCMC)
+Public LHCb data, HEPData record
+[ins1409497](https://www.hepdata.net/record/ins1409497)
+(doi:10.17182/hepdata.74247.v1), Run-1, 3 fb⁻¹ at $\sqrt{s} = 7$ and 8 TeV.
+Seven $q^2$ bins from 1.1 to 19 GeV², excluding the photon pole below 1 GeV²
+and the charmonium regions.
 
-```bash
-python scripts/fit_usf.py
-```
+Theory predictions use [flavio](https://flav-io.github.io/) and
+[wilson](https://wilson-eft.github.io/).
 
-This will:
+## Limitations
 
-- Load the data from `data/p5p_observables.csv`
-- Find the best‑fit $\kappa$ (scipy minimization)
-- Run MCMC (2000 steps, 32 walkers, burn‑in 1000)
-- Save `results/fit_results.json` (kappa, chi2 values, intervals)
-- Save `results/mcmc_chains.h5` (MCMC samples)
-- Generate `results/corner_kappa.pdf` (posterior distribution)
-
-### Generate all figures
-
-```bash
-python scripts/plot_p5p.py
-```
-
-Produces:
-
-- `results/spectrum_p5p.pdf` – data vs. SM vs. USF
-- `results/residuals_p5p.pdf` – normalised residuals (SM vs. USF)
-- `results/fator_geometrico.pdf` – geometric coupling $f_{\text{geo}}(q^2)$
-- `results/hllhc_projection.pdf` – projection to HL-LHC (errors reduced 5×)
-
-All figures are saved both as PDF (vector) and PNG (high resolution).
-
-## Expected output
-
-After running `fit_usf.py`, the terminal should show a summary resembling:
-
-```text
-Loaded 7 q² bins (P5') from LHCb.
-Best-fit kappa: 1.4443
-100%|████████████████████| 2000/2000 [...]
-chi2_SM = 70.40, chi2_USF = 13.90, Delta = 56.50
-MCMC done. Results saved in results/
-```
-
-The file `results/fit_results.json` will contain:
-
-```json
-{
-  "kappa_best": 1.4443,
-  "kappa_median": 1.4425,
-  "kappa_lower": 1.2493,
-  "kappa_upper": 1.6293,
-  "chi2_SM": 70.4,
-  "chi2_USF": 13.9,
-  "delta_chi2": 56.5
-}
-```
-
-## Example results
-
-Below is the spectrum of \(P_5'\) from the fit (data, SM and USF):
-
-![Spectrum](results/spectrum_p5p.png)
-
-The posterior distribution of \(\kappa\) is shown below:
-
-![Corner plot](results/corner_kappa.png)
-
-## Reproducibility and citation
-
-- **Data**: Public LHCb data from HEPData record [ins1409497](https://www.hepdata.net/record/ins1409497) (doi:10.17182/hepdata.74247.v1).
-- **Code**: This repository is archived on Zenodo [doi:10.5281/zenodo.xxxxxx](https://doi.org/10.5281/zenodo.xxxxxx).
-- **Paper**: Preprint available at arXiv:XXXX.XXXXX (to be updated).
-
-When using this code or results, please cite:
-
-```text
-[Efrain Marcelo Pulgar Pantaleon , Efrain Pantaleón Matamoros], “Resolving the P5' anomaly with the Unified State Function (USF): a 7.5 sigma evidence from public LHCb data”, arXiv:XXXX.XXXXX (2026)
-and the Zenodo repository (doi:10.5281/zenodo.xxxxxx).
-```
+- Run-1 data only. Run-2 LHCb, CMS at 13 TeV, ATLAS and Belle are not included,
+  and a serious claim about $b \to s\ell\ell$ would need them.
+- $P_5'$ alone. A model modifying $C_9$ and $C_{10}$ should be fitted jointly
+  with branching fractions and the other angular observables.
+- A lepton-universal $\Delta C_9 \approx -1$ is equally what an unmodelled
+  charm-loop hadronic contribution would produce. Nothing here distinguishes a
+  geometric origin from that far more mundane one.
 
 ## License
 
-This project is licensed under the **MIT License** – see the [LICENSE](LICENSE) file for details. The code is free to use, modify and distribute, provided proper attribution is given.
+MIT — see [LICENSE](LICENSE).
 
 ## Authors & contact
 
-- **Efrain Marcelo Pulgar Pantaleon** – [GitHub](https://github.com/efrainmpp1), email: [efrain.pulgar.110@ufrn.edu.br](mailto:efrain.pulgar.110@ufrn.edu.br) - Graduate Program in Electrical Engineering and Computer Science, UFRN
-- **Efrain Pantaleon Matamoros** - email: [efrain.pantaleon@ufrn.br](mailto:efrain.pantaleon@ufrn.edu.br) – School of Science and Technology, UFRN
-
-For questions or collaboration, please open an issue or contact the authors directly.
+- **Efrain Marcelo Pulgar Pantaleon** — [GitHub](https://github.com/efrainmpp1),
+  [efrain.pulgar.110@ufrn.edu.br](mailto:efrain.pulgar.110@ufrn.edu.br) —
+  Graduate Program in Electrical Engineering and Computer Science, UFRN
+- **Efrain Pantaleon Matamoros** —
+  [efrain.pantaleon@ufrn.br](mailto:efrain.pantaleon@ufrn.edu.br) —
+  School of Science and Technology, UFRN
