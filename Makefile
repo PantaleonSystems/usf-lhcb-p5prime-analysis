@@ -1,9 +1,10 @@
 .PHONY: all data fit consistency figures readme test clean distclean help
 
-PYTHON ?= python
+PYTHON ?= $(if $(wildcard .venv/bin/python),.venv/bin/python,python)
 export PYTHONPATH := scripts
 
 RAW := data/raw/HEPData-ins1409497-v1-yaml
+HEPDATA_STAMP := $(RAW)/.ins1409497-v1-downloaded
 CSV := data/p5p_observables.csv
 FIT := results/fit_results.json
 GLOBAL := results/global_consistency.json
@@ -21,7 +22,11 @@ help:
 
 all: readme
 
-$(CSV): scripts/generate_p5p_csv.py scripts/covariance.py $(RAW)/Table2.yaml
+
+$(HEPDATA_STAMP): scripts/download_hepdata.py
+	$(PYTHON) $<
+
+$(CSV): scripts/generate_p5p_csv.py scripts/covariance.py $(HEPDATA_STAMP)
 	$(PYTHON) scripts/generate_p5p_csv.py
 
 data: $(CSV)
