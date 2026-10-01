@@ -106,15 +106,29 @@ usf-lhcb-p5prime-analysis/
 
 ## Getting started
 
+With Python and `curl` installed, create an isolated environment and run the
+pipeline:
+
+```bash
+python3 -m venv .venv
+. .venv/bin/activate
+python -m pip install -r requirements.txt
+make all
+```
+
+The Makefile uses `.venv/bin/python` automatically when that environment
+exists. Conda is also supported:
+
 ```bash
 conda env create -f environment.yaml
 conda activate usf-lhc
 make all
 ```
 
-`make all` runs the whole pipeline from the raw HEPData YAML: rebuilds the CSV,
-runs the fit, performs the cross-check, regenerates every figure, and refreshes
-the results block above. Individual stages are available as `make data`,
+`make all` runs the whole pipeline from the raw HEPData YAML: downloads the
+pinned HEPData archive on first use, rebuilds the CSV, runs the fit, performs
+the cross-check, regenerates every figure, and refreshes the results block
+above. Individual stages are available as `make data`,
 `make fit`, `make consistency`, `make figures`; `make help` lists them.
 
 The first run builds two caches (flavio theory covariance, and the
@@ -141,6 +155,11 @@ Public LHCb data, HEPData record
 (doi:10.17182/hepdata.74247.v1), Run-1, 3 fb⁻¹ at $\sqrt{s} = 7$ and 8 TeV.
 Seven $q^2$ bins from 1.1 to 19 GeV², excluding the photon pole below 1 GeV²
 and the charmonium regions.
+
+The raw YAML archive is downloaded from the record's [version 1 submission](https://www.hepdata.net/download/submission/ins1409497/1/yaml)
+to the Git-ignored `data/raw/` directory when `make data` or `make all` is run.
+This is a pinned historical dataset; newer measurements are not fetched
+automatically.
 
 Theory predictions use [flavio](https://flav-io.github.io/) and
 [wilson](https://wilson-eft.github.io/).

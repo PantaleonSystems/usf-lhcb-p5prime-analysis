@@ -20,4 +20,5 @@ dependencies:
       # Standard Model and new-physics predictions for b -> s l l observables.
       # Replaces the hard-coded P5'_SM interpolation table in scripts/utils.py.
       - flavio==2.7.*
-      - wilson==2.4.*
+      - wilson==2.5.*
+      - particle==0.25.*
